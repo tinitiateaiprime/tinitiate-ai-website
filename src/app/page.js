@@ -8,7 +8,7 @@ import HomeHeroSlider from "./components/HomeHeroSlider";
 import HomeFAQSection from "./components/HomeFAQSection";
 import CampusPlacementVisits from "./components/CampusPlacementVisits";
 import { PricingCardsShowcase } from "./components/PricingCards";
-import { submitNetlifyForm } from "@/lib/netlifyForms";
+import { submitContactForm } from "@/lib/contactForms";
 import { useState, useEffect, useRef } from "react";
 import {
   ShoppingCart,
@@ -2658,7 +2658,7 @@ function CareerPathPlanSection() {
     setGuideSubmitError("");
 
     try {
-      await submitNetlifyForm(formElement);
+      await submitContactForm(formElement);
       setGuideSubmitted(true);
       setGuideSubmitting(false);
       setGuideFormData({
@@ -2670,7 +2670,7 @@ function CareerPathPlanSection() {
       });
     } catch (error) {
       console.error(error);
-      setGuideSubmitError("Something went wrong. Please try again.");
+      setGuideSubmitError(error.message || "Something went wrong. Please try again.");
       setGuideSubmitting(false);
     } finally {
       guideSubmitLockRef.current = false;
@@ -2764,8 +2764,7 @@ function CareerPathPlanSection() {
                 ref={guideFormRef}
                 name="request-callback"
                 method="POST"
-                action="/__forms.html"
-                data-netlify="true"
+                action="/api/contact"
                 onSubmit={handleGuideSubmit}
                 className="mt-7 space-y-4 lg:space-y-5"
               >
@@ -3039,7 +3038,7 @@ export default function HomePage() {
     setSubmitError("");
 
     try {
-      await submitNetlifyForm(event.currentTarget);
+      await submitContactForm(event.currentTarget);
 
       setSubmitted(true);
       setSubmitting(false);
@@ -3051,7 +3050,7 @@ export default function HomePage() {
       }, 2500);
     } catch (error) {
       console.error(error);
-      setSubmitError("Something went wrong. Please try again.");
+      setSubmitError(error.message || "Something went wrong. Please try again.");
       setSubmitting(false);
     }
   };
@@ -3108,8 +3107,7 @@ export default function HomePage() {
                   <form
                     name="request-callback"
                     method="POST"
-                    action="/__forms.html"
-                    data-netlify="true"
+                    action="/api/contact"
                     onSubmit={handleSubmit}
                     className="space-y-4"
                   >

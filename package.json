@@ -11,6 +11,7 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@aws-sdk/client-ses": "^3.1152.0",
     "@azure/ai-projects": "^2.3.0",
     "@azure/identity": "^4.13.1",
     "@emotion/react": "^11.14.0",

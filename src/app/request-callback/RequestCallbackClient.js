@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Book, Briefcase, Clock, Mail, MessageSquare, Phone, User } from 'lucide-react'
-import { submitNetlifyForm } from '@/lib/netlifyForms'
+import { submitContactForm } from '@/lib/contactForms'
 
 const INITIAL_FORM = {
   name: '',
@@ -29,6 +29,7 @@ export default function RequestCallbackPage({ course = '', service = '' }) {
 
   const [form, setForm] = useState(() => buildInitialForm(selectedTopic))
   const [status, setStatus] = useState('idle')
+  const [errorMessage, setErrorMessage] = useState('')
 
   const handleChange = (event) => {
     const { name, value } = event.target
@@ -38,14 +39,16 @@ export default function RequestCallbackPage({ course = '', service = '' }) {
   const handleSubmit = async (event) => {
     event.preventDefault()
     setStatus('sending')
+    setErrorMessage('')
 
     try {
-      await submitNetlifyForm(event.currentTarget)
+      await submitContactForm(event.currentTarget)
 
       setStatus('success')
       setForm(buildInitialForm(selectedTopic))
     } catch (error) {
       console.error(error)
+      setErrorMessage(error.message || 'Something went wrong. Please try again.')
       setStatus('error')
     }
   }
@@ -116,8 +119,7 @@ export default function RequestCallbackPage({ course = '', service = '' }) {
           <form
             name={FORM_NAME}
             method="POST"
-            action="/__forms.html"
-            data-netlify="true"
+            action="/api/contact"
             onSubmit={handleSubmit}
             className="space-y-4"
           >
@@ -212,7 +214,7 @@ export default function RequestCallbackPage({ course = '', service = '' }) {
             </button>
 
             {status === 'error' ? (
-              <p className="text-sm text-red-600">Something went wrong. Please try again.</p>
+              <p role="alert" className="text-sm text-red-600">{errorMessage}</p>
             ) : null}
           </form>
         </div>
