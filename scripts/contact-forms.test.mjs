@@ -50,6 +50,35 @@ test('rejects requests from another website', async () => {
   assert.equal((await handler(request(valid, { origin: 'https://other.example' }))).status, 403);
 });
 
+test('accepts public website origins behind an Amplify internal host', async () => {
+  let deliveries = 0;
+  const handler = createContactFormHandler(async () => {
+    deliveries++;
+    return { MessageId: 'test-only' };
+  }, config);
+  for (const origin of ['https://tinitiateai.com', 'https://www.tinitiateai.com']) {
+    const proxied = new Request('http://localhost:3000/api/contact', {
+      method: 'POST',
+      headers: { origin, 'content-type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams(valid),
+    });
+    assert.equal((await handler(proxied)).status, 200);
+  }
+  assert.equal(deliveries, 2);
+});
+
+test('rejects lookalike and malformed origins behind the proxy', async () => {
+  const handler = createContactFormHandler(async () => assert.fail('must not send'), config);
+  for (const origin of ['https://tinitiateai.com.evil.example', 'https://evil.example/tinitiateai.com', 'null', 'invalid']) {
+    const proxied = new Request('http://localhost:3000/api/contact', {
+      method: 'POST',
+      headers: { origin, 'content-type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams(valid),
+    });
+    assert.equal((await handler(proxied)).status, 403);
+  }
+});
+
 test('rejects unsupported and oversized payloads', async () => {
   const handler = createContactFormHandler(async () => assert.fail('must not send'), config);
   assert.equal((await handler(request(valid, { 'content-type': 'application/json' }))).status, 415);

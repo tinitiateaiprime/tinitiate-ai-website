@@ -1,6 +1,7 @@
 const FIELDS = ['name', 'email', 'phone', 'course', 'preferredTime', 'message', 'source', 'topicType', 'originalFormName'];
 const EMAIL = /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/;
 const MAX_BODY_BYTES = 20000;
+const PUBLIC_FORM_ORIGINS = ['https://tinitiateai.com', 'https://www.tinitiateai.com'];
 
 function json(body, status) {
   return Response.json(body, { status, headers: { 'Cache-Control': 'no-store' } });
@@ -9,7 +10,10 @@ function json(body, status) {
 export function createContactFormHandler(sendEmail, getConfig) {
   return async function POST(request) {
     const origin = request.headers.get('origin');
-    if (origin && origin !== new URL(request.url).origin) {
+    // Amplify may expose an internal compute host in request.url behind its proxy.
+    // Explicitly trust our public origins while retaining same-origin local previews.
+    const allowedOrigins = new Set([...PUBLIC_FORM_ORIGINS, new URL(request.url).origin]);
+    if (origin && !allowedOrigins.has(origin)) {
       return json({ error: 'Please submit this form from our website.' }, 403);
     }
     const contentType = request.headers.get('content-type') || '';
