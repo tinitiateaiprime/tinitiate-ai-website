@@ -31,22 +31,16 @@ export default function RequestCallbackPage() {
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value })
 
-  const FORM_ENDPOINT = '/__forms.html'
-
-  const encode = (data) =>
-    Object.keys(data)
-      .map((key) => encodeURIComponent(key) + '=' + encodeURIComponent(data[key]))
-      .join('&')
-
   const handleSubmit = async (e) => {
     e.preventDefault()
     setStatus('sending')
     try {
-      await fetch(FORM_ENDPOINT, {
+      const res = await fetch('/api/request-callback', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: encode({ 'form-name': 'request-callback', ...form }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
       })
+      if (!res.ok) throw new Error('Request failed')
       setStatus('success')
       setForm({ name: '', email: '', phone: '',course:'', preferredTime: '', message: '' })
     } catch (err) {

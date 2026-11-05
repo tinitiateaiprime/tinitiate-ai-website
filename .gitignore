@@ -20,6 +20,9 @@
 # production
 /build
 
+# local callback enquiries used when Cosmos settings are absent
+/data
+
 # misc
 .DS_Store
 *.pem

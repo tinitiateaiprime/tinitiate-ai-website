@@ -4,11 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "NEXT_DISABLE_TURBOPACK=1 next build",
+    "build": "cross-env NEXT_DISABLE_TURBOPACK=1 next build",
     "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
+    "@azure/cosmos": "^4.10.1",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@fortawesome/fontawesome-svg-core": "^7.1.0",
