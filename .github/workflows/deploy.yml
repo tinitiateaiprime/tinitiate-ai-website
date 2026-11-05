@@ -88,7 +88,7 @@ jobs:
         with:
           app-name: ${{ steps.target.outputs.name }}
           package: dist/app.zip
-          startup-command: npm start
+          startup-command: node node_modules/next/dist/bin/next start
 
       - name: Show the site address
         run: echo "Deployed to ${{ steps.deploy.outputs.webapp-url }}"

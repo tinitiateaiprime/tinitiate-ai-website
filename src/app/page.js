@@ -378,7 +378,7 @@ export default function HomePage() {
 <ScrollReveal> {/* ✅ ADDED ANIMATION WRAPPER */}
 <section className="py-16 px-6 bg-white">
   <h2 className="text-4xl font-bold text-center mb-12 text-gray-900">
-    Why Choose TINITIATE?
+    Why to Choose TINITIATE?
   </h2>
 
   <div className="max-w-6xl mx-auto grid md:grid-cols-2 lg:grid-cols-3 gap-6">
