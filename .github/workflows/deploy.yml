@@ -1,0 +1,99 @@
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: ["Build"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      webapp_name:
+        description: Azure Web App name. Leave empty to use the AZURE_WEBAPP_NAME variable.
+        required: false
+        type: string
+
+permissions:
+  actions: read
+  contents: read
+  id-token: write
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+    steps:
+      - name: Resolve the Azure Web App name
+        id: target
+        env:
+          INPUT_NAME: ${{ github.event.inputs.webapp_name }}
+          VAR_NAME: ${{ vars.AZURE_WEBAPP_NAME }}
+        run: |
+          NAME="$INPUT_NAME"
+          if [ -z "$NAME" ]; then
+            NAME="$VAR_NAME"
+          fi
+          if [ -z "$NAME" ]; then
+            echo "Set the AZURE_WEBAPP_NAME repository variable, or enter webapp_name when running this workflow."
+            exit 1
+          fi
+          echo "name=$NAME" >> "$GITHUB_OUTPUT"
+
+      - name: Check out the selected branch
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/checkout@v5
+
+      - name: Set up Node.js
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/setup-node@v5
+        with:
+          node-version-file: .node-version
+          cache: npm
+
+      - name: Build a deployment package
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: true
+        run: |
+          npm ci
+          npm run build
+          npm prune --omit=dev
+          mkdir -p dist
+          zip -qr dist/app.zip .next public src next.config.mjs package.json package-lock.json node_modules
+
+      - name: Download the package from Build
+        if: github.event_name == 'workflow_run'
+        uses: actions/download-artifact@v8
+        with:
+          name: tinitiate-app
+          path: dist
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+
+      - name: Sign in to Azure
+        uses: azure/login@v3
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy to Azure App Service
+        id: deploy
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ steps.target.outputs.name }}
+          package: dist/app.zip
+          startup-command: npm start
+
+      - name: Show the site address
+        run: echo "Deployed to ${{ steps.deploy.outputs.webapp-url }}"
+
+      - name: Sign out of Azure
+        if: always()
+        continue-on-error: true
+        run: az logout
